@@ -1,0 +1,391 @@
+---
+title: "Pune Tree Census August 2019(Leaflet Assignment)"
+author: "Rishikesh Pillay"
+date: "6/30/2021"
+output: html_document
+runtime: shiny
+---
+
+
+# Overview 
+My main motive is to understand the Tree census or record of my hometown Pune city .I am proud to say that Pune city is smart city and I got this data from website .Note - Data is updated on August 2019
+
+- [Pune Data-Store](http://opendata.punecorporation.org/Citizen/CitizenDatasets/Index) 
+- [Data File](http://opendata.punecorporation.org/Citizen/CitizenDatasets/DownloadDataset/483?filepath=%2FDocuments%2F483%2FPune%20Tree%20Census%20August%202019.zip)
+
+This data include many features like location of trees , size canopy , common names etc.
+I will used this data to hopefully plot it on interactive map using Leaflet library
+
+# Data Reading and Cleaning 
+
+```{r Data reading, results='hide',  warning=FALSE,  message=FALSE, cache=TRUE}
+
+library(readr)
+library(dplyr)
+library(shiny)
+
+features <-
+        c(
+                "id",
+                "canopy_dia_m",
+                "condition",
+                "northing",
+                "easting",
+                "common_name",
+                "botanical_name",
+                "ward",
+                "local_name",
+                "economic_i",
+                "road_name"
+        )
+
+
+df <- read_csv("Data/Pune Tree Census August 2019/p5.csv")
+
+
+
+# Merging Data and removing raw files
+
+df <- select(df, all_of(features))
+
+
+
+```
+
+Removing raw data is important or it will take unnecessary space.There are 40lakhs plus rows and 28 features. I took only features I need for ploting.
+
+# Ward 
+Due to large dataset its taking longer time and High computing power map is taking longer time that's why I decided to divide data into ward then plot them.
+Wards are how here city is divide under corporate officials.
+
+```{r Ward subseting ,cache=TRUE, warning=FALSE}
+
+dfWard1_20 <- filter(df , ward %in% c(1:20))
+dfWard21_40 <- filter(df , ward %in% c(21:40))
+dfWard41_60 <- filter(df , ward %in% c(41:60))
+dfWard61_77 <- filter(df , ward %in% c(61:77))
+paste("Number of Rows:",nrow(df)) 
+rm(df)
+
+``` 
+
+
+# Leaflet Plot
+
+
+## WARD (1 to 20)
+
+```{r leaflet_1,  warning= FALSE, cache= TRUE, eval = TRUE}
+
+library(leaflet)
+
+plot1 <- addTiles(leaflet())
+
+
+botName <- unique(dfWard1_20$botanical_name)
+for (x in botName) {
+        df2 <- filter(dfWard1_20, botanical_name == x)
+        
+        icons <-
+                icons(
+                        iconUrl =  ifelse(
+                                df2$condition == "Healthy",
+                                "icons/banyan_icon.png",
+                                ifelse(
+                                        df2$condition == 'Average',
+                                        "icons/average.jpg",
+                                        ifelse(
+                                                df2$condition == "Dead",
+                                                "icons/dead2.jpg",
+                                                'icons/poor.jpg'
+                                        )
+                                )
+                        ),
+                        iconWidth = 30,
+                        iconHeight = 55
+                )
+        
+        popupMesage <-
+                data.frame(
+                        popup = paste(
+                                sep = "<br>",
+                                "<b>Botanical Name:</b>" ,
+                                df2$botanical_name,
+                                "<b>Common Name:</b>",
+                                df2$common_name ,
+                                paste("<b>Canopy Diameter:</b>", df2$canopy_dia_m),
+                                paste("<b>Ward:</b>", df2$ward),
+                                paste("<b>Economic use:</b>", df2$economic_i) ,
+                                paste("<b>Street:</b>", df2$road_name) ,
+                                paste("<b>Condition:</b>", df2$condition)
+                        )
+                )
+        
+        plot1 <-
+                plot1 %>% addMarkers(
+                        lat = df2$northing,
+                        lng = df2$easting ,
+                        icon = icons,
+                        clusterOptions = markerClusterOptions(),
+                        popup = popupMesage$popup,
+                        label = paste("Local Name:", df2$local_name, ", Ward:", df2$ward)
+                )
+        
+        
+}
+rm(dfWard1_20)
+
+#plot1
+
+```
+
+
+
+
+```{r leaflet_2, echo=FALSE, warning=FALSE, cache=TRUE}
+# WARD (21 to 40)
+
+plot2 <- addTiles(leaflet())
+
+
+botName <- unique(dfWard21_40$botanical_name)
+for (x in botName) {
+        df2 <- filter(dfWard21_40, botanical_name == x)
+        
+        icons <-
+                icons(
+                        iconUrl =  ifelse(
+                                df2$condition == "Healthy",
+                                "icons/banyan_icon.png",
+                                ifelse(
+                                        df2$condition == 'Average',
+                                        "icons/average.jpg",
+                                        ifelse(
+                                                df2$condition == "Dead",
+                                                "icons/dead2.jpg",
+                                                'icons/poor.jpg'
+                                        )
+                                )
+                        ),
+                        iconWidth = 30,
+                        iconHeight = 55
+                )
+        
+        popupMesage <-
+                data.frame(
+                        popup = paste(
+                                sep = "<br>",
+                                "<b>Botanical Name:</b>" ,
+                                df2$botanical_name,
+                                "<b>Common Name:</b>",
+                                df2$common_name ,
+                                paste("<b>Canopy Diameter:</b>", df2$canopy_dia_m),
+                                paste("<b>Ward:</b>", df2$ward),
+                                paste("<b>Economic use:</b>", df2$economic_i) ,
+                                paste("<b>Street:</b>", df2$road_name) ,
+                                paste("<b>Condition:</b>", df2$condition)
+                        )
+                )
+        
+        plot2 <-
+                plot2 %>% addMarkers(
+                        lat = df2$northing,
+                        lng = df2$easting ,
+                        icon = icons,
+                        clusterOptions = markerClusterOptions(),
+                        popup = popupMesage$popup,
+                        label = paste("Local Name:", df2$local_name, ", Ward:", df2$ward)
+                )
+        
+        
+}
+
+rm(dfWard21_40)
+
+#plot2
+
+```
+
+
+
+
+```{r leaflet_3,echo=FALSE,warning=FALSE, cache=TRUE}
+## WARD (41 to 60)
+
+plot3 <- addTiles(leaflet())
+
+
+botName <- unique(dfWard41_60$botanical_name)
+for (x in botName) {
+        df2 <- filter(dfWard41_60, botanical_name == x)
+        
+        icons <-
+                icons(
+                        iconUrl =  ifelse(
+                                df2$condition == "Healthy",
+                                "icons/banyan_icon.png",
+                                ifelse(
+                                        df2$condition == 'Average',
+                                        "icons/average.jpg",
+                                        ifelse(
+                                                df2$condition == "Dead",
+                                                "icons/dead2.jpg",
+                                                'icons/poor.jpg'
+                                        )
+                                )
+                        ),
+                        iconWidth = 30,
+                        iconHeight = 55
+                )
+        
+        popupMesage <-
+                data.frame(
+                        popup = paste(
+                                sep = "<br>",
+                                "<b>Botanical Name:</b>" ,
+                                df2$botanical_name,
+                                "<b>Common Name:</b>",
+                                df2$common_name ,
+                                paste("<b>Canopy Diameter:</b>", df2$canopy_dia_m),
+                                paste("<b>Ward:</b>", df2$ward),
+                                paste("<b>Economic use:</b>", df2$economic_i) ,
+                                paste("<b>Street:</b>", df2$road_name) ,
+                                paste("<b>Condition:</b>", df2$condition)
+                        )
+                )
+        
+        plot3 <-
+                plot3 %>% addMarkers(
+                        lat = df2$northing,
+                        lng = df2$easting ,
+                        icon = icons,
+                        clusterOptions = markerClusterOptions(),
+                        popup = popupMesage$popup,
+                        label = paste("Local Name:", df2$local_name, ", Ward:", df2$ward)
+                )
+        
+        
+}
+
+rm(dfWard41_60)
+
+#plot3
+
+```
+
+
+
+
+```{r leaflet_4, echo=FALSE,warning=FALSE, cache=TRUE}
+## WARD (60 to 77)
+
+plot4 <- addTiles(leaflet())
+
+
+botName <- unique(dfWard61_77$botanical_name)
+for (x in botName) {
+        df2 <- filter(dfWard61_77, botanical_name == x)
+        
+        icons <-
+                icons(
+                        iconUrl =  ifelse(
+                                df2$condition == "Healthy",
+                                "icons/banyan_icon.png",
+                                ifelse(
+                                        df2$condition == 'Average',
+                                        "icons/average.jpg",
+                                        ifelse(
+                                                df2$condition == "Dead",
+                                                "icons/dead2.jpg",
+                                                'icons/poor.jpg'
+                                        )
+                                )
+                        ),
+                        iconWidth = 30,
+                        iconHeight = 55
+                )
+        
+        popupMesage <-
+                data.frame(
+                        popup = paste(
+                                sep = "<br>",
+                                "<b>Botanical Name:</b>" ,
+                                df2$botanical_name,
+                                "<b>Common Name:</b>",
+                                df2$common_name ,
+                                paste("<b>Canopy Diameter:</b>", df2$canopy_dia_m),
+                                paste("<b>Ward:</b>", df2$ward),
+                                paste("<b>Economic use:</b>", df2$economic_i) ,
+                                paste("<b>Street:</b>", df2$road_name) ,
+                                paste("<b>Condition:</b>", df2$condition)
+                        )
+                )
+        
+        plot4 <-
+                plot4 %>% addMarkers(
+                        lat = df2$northing,
+                        lng = df2$easting ,
+                        icon = icons,
+                        clusterOptions = markerClusterOptions(),
+                        popup = popupMesage$popup,
+                        label = paste("Local Name:", df2$local_name, ", Ward:", df2$ward)
+                )
+        
+        
+}
+
+rm(dfWard61_77)
+
+#plot4
+
+```
+
+```{r Plot}
+
+library(shiny)
+library(leaflet)
+
+ui <- fluidPage(
+        
+        titlePanel("Pune Tree census 2019"),
+        
+      navbarPage("Tree census",
+                
+
+                                tabPanel("Ward 1-20", leafletOutput("out1")), 
+                                tabPanel("Ward 21-40", leafletOutput("out2")),
+                                tabPanel("Ward 41-60", leafletOutput("out3")),
+                                tabPanel("Ward 61-77", leafletOutput("out4"))
+                        )
+)
+
+server <- function(input, output) {
+        output$out1 <- renderLeaflet(plot1)
+        output$out2 <- renderLeaflet(plot2)
+        output$out3 <- renderLeaflet(plot3)
+        output$out4 <- renderLeaflet(plot4)
+}
+
+
+shinyApp(ui, server)
+
+
+
+```
+
+# Date
+```{r Date , echo=FALSE, cache=TRUE}
+Date = format(Sys.Date(), '%d %b %Y')
+```
+## `r Date`
+
+## Notes
+
+1. It may take little time to load sorry for inconvenience
+2. Code for ward 21 to 77 is in Rmd file in my github [Repo]("https://github.com/Rishikesh0714/Pune-Tree-Census-August-2019")
+3. I Tried to use all data but its taking too much time to render  and my R is crashing.
+4. There is many more entries in files name p1, p2, p3 and p5 all 1000000 rows. This visualization is not able to render whole data .
+5. Feel free to use Data From my github page.
+
+
+
