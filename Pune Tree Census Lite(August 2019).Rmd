@@ -1,0 +1,121 @@
+---
+title: "Pune Tree Census August 2019(Leaflet Assignment)"
+author: "Rishikesh Pillay"
+date: "7/3/2021"
+output: html_document
+---
+# Overview 
+My main motive is to understand the Tree census or record of my hometown Pune city .I am proud to say that Pune city is smart city and I got this data from website .Note - Data is updated on August 2019
+
+- [Pune Data-Store](http://opendata.punecorporation.org/Citizen/CitizenDatasets/Index) 
+- [Data File](http://opendata.punecorporation.org/Citizen/CitizenDatasets/DownloadDataset/483?filepath=%2FDocuments%2F483%2FPune%20Tree%20Census%20August%202019.zip)
+
+This data include many features like location of trees , size canopy , common names etc.
+I will used this data to hopefully plot it on interactive map using Leaflet library
+
+# Data Reading and Cleaning 
+
+```{r Data reading, results='hide',  warning=FALSE,  message=FALSE, cache=TRUE}
+
+library(readr)
+library(dplyr)
+library(shiny)
+
+features <-
+        c(
+                "id",
+                "canopy_dia_m",
+                "condition",
+                "northing",
+                "easting",
+                "common_name",
+                "botanical_name",
+                "ward",
+                "local_name",
+                "economic_i",
+                "road_name"
+        )
+
+
+df <- read_csv("Data/Pune Tree Census August 2019/p5.csv")
+
+
+
+df <- select(df, all_of(features))
+
+
+
+```
+
+Removing raw data is important or it will take unnecessary space.There are 40lakhs plus rows and 28 features. I took only features I need for ploting.
+
+# Leaflet Plot
+
+
+
+```{r leaflet_1,  warning= FALSE, cache= TRUE, eval = TRUE}
+
+library(leaflet)
+
+plot1 <- addTiles(leaflet()) 
+
+icons <-
+                icons(
+                        iconUrl =  ifelse(
+                                df$condition == "Healthy",
+                                "icons/banyan_icon.png",
+                                ifelse(
+                                        df$condition == 'Average',
+                                        "icons/average.jpg",
+                                        ifelse(
+                                                df$condition == "Dead",
+                                                "icons/dead2.jpg",
+                                                'icons/poor.jpg'
+                                        )
+                                )
+                        ),
+                        iconWidth = 30,
+                        iconHeight = 55
+                )
+        
+        popupMesage <-
+                data.frame(
+                        popup = paste(
+                                sep = "<br>",
+                                "<b>Botanical Name:</b>" ,
+                                df$botanical_name,
+                                "<b>Common Name:</b>",
+                                df$common_name ,
+                                paste("<b>Canopy Diameter:</b>", df$canopy_dia_m),
+                                paste("<b>Ward:</b>", df$ward),
+                                paste("<b>Economic use:</b>", df$economic_i) ,
+                                paste("<b>Street:</b>", df$road_name) ,
+                                paste("<b>Condition:</b>", df$condition)
+                        )
+                )
+        
+        plot1 <-
+                plot1 %>% addMarkers(
+                        lat = df$northing,
+                        lng = df$easting ,
+                        icon = icons,
+                        clusterOptions = markerClusterOptions(),
+                        popup = popupMesage$popup,
+                        label = paste("Local Name:", df$local_name, ", Ward:", df$ward)
+                )
+```
+
+# Pune Tree Census 
+
+`r plot1`
+
+# Date
+```{r Date , echo=FALSE, cache=TRUE}
+Date = format(Sys.Date(), '%d %b %Y')
+```
+## `r Date`
+
+# Conclusion/Notes
+
+1. Data is very large and I took only small subset of it for there was latency in rendering the leaflet. You can Find whole data from above source
+2. My Github[Repo]("https://github.com/Rishikesh0714/Pune-Tree-Census-August-2019")
